@@ -14,10 +14,14 @@ IronHook is a high-performance, security-grade inline hook library designed spec
 
 IronHook aims to solve the memory safety risks and complex call chain management problems of traditional C hook frameworks in multi-threaded environments by leveraging Rust's ownership model and RAII (Resource Acquisition and Initialization) mechanism.
 
+# Project Icon
+
+![Project Icon](https://github.com/OSH-2026/IronHook/blob/main/icon.png)
+
 ## Schedule
 
-| **项目阶段**   | **日期** | **项目进展**                                                 | **工作安排**                                                 |
-| -------------- | -------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| **选题确认**   | 3.23  | 与指导老师沟通并得到明确同意，正式确认项目大作业选题为“使用 Rust 语言改写字节跳动开源的 `android-inline-hook` 项目”。 | 明确项目最终方向与总体目标，小组成员准备结束选题阶段，转入针对该开源项目的底层源码调研。 |
-| **初步调研**   | 4.7   | 开展了线上会议，针对 `android-inline-hook` 原始项目的架构展开初步讨论，计划具体调研其底层实现细节与工作机制。 | 小组安排分工，深入阅读并解析原始项目源码，重点梳理其 C/C++ 核心逻辑与 Hook 机制原理，为后续的 Rust 移植奠定基础。 |
-| **可行性调研** | 4.13  | 开展了线下会议，基于前期的源码调研结果，小组讨论后决定采取渐进式重构策略，优先从最核心的 Hook 层入手进行改写尝试。 | 1. **小组分工撰写可行性分析报告**（涵盖技术路线、难点分析等）； 2. 准备搭建 Rust 交叉编译与测试环境，针对 Hook 层的初步改写路线开展技术验证。 |
+| **Project Phase** | **Date** | **Project Progress** | **Task Allocation** |
+| :--- | :--- | :--- | :--- |
+| **Topic Confirmation** | 3.23 | Communicated with the supervisor and received approval to officially set the project topic as: "Rewriting ByteDance's open-source `android-inline-hook` project using Rust." | Clarified the final direction and overall goals of the project. The team wrapped up the topic selection phase and transitioned to researching the underlying source code of the original project. |
+| **Preliminary Research** | 4.7 | Held an online meeting to discuss the architecture of the original `android-inline-hook` project, planning to thoroughly investigate its underlying implementation details and mechanisms. | Assigned tasks to team members to deeply analyze the original source code, focusing on its core C/C++ logic and the principles of the Hook mechanism to lay the foundation for the subsequent Rust porting. |
+| **Feasibility Research** | 4.13 | Held an offline meeting. Based on previous code research, the team decided to adopt a progressive refactoring strategy, prioritizing the rewrite of the core Hook layer. | 1. Divided tasks to draft the feasibility analysis report (covering technical routes, difficulty analysis, etc.); <br> 2. Planned the setup of the Rust cross-compilation and testing environment to conduct technical validation for the initial Hook layer rewrite. |
