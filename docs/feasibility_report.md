@@ -1,4 +1,4 @@
-# 基于 Rust 重构 Android Inline Hook 框架：可行性报告
+# IronHook：可行性报告
 
 ## 1. 摘要
 
@@ -113,8 +113,8 @@ cargo ndk -t arm64-v8a -t armeabi-v7a -o ./jniLibs build --release
 
 1. [The Rust Programming Language.](https://doc.rust-lang.org/book/)
 2. [The Rustonomicon.](https://doc.rust-lang.org/nomicon/)
-3. [Arm Architecture Reference Manual for A-profile architecture.](https://developer.arm.com/documentation/ddi0406/c/)
+3. [Arm Architecture Reference Manual for A-profile architecture.](https://developer.arm.com/documentation/ddi0487/latest/)
 4. [Procedure Call Standard for the Arm 64-bit Architecture (AAPCS64).](https://github.com/ARM-software/abi-aa/blob/main/aapcs64/aapcs64.rst)
 5. [Bytedance/android-inline-hook.](https://github.com/bytedance/android-inline-hook)
 6. [Android NDK Documentation & System Calls (mprotect, mmap).](https://developer.android.com/ndk/guides)
-7. [Capstone Disassembly Framework Documentation.](https://www.capstone-engine.org/documentation.html)
+7. [Capstone Disassembly Engine.](https://www.capstone-engine.org/)

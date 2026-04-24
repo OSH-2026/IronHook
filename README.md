@@ -16,7 +16,7 @@ IronHook aims to solve the memory safety risks and complex call chain management
 
 # Project Icon
 
-![Project Icon](https://github.com/OSH-2026/IronHook/blob/main/icon.png)
+![Project Icon](icon.png)
 
 ## Schedule
 
