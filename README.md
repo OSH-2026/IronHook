@@ -16,7 +16,7 @@ IronHook aims to solve the memory safety risks and complex call chain management
 
 # Project Icon
 
-![Project Icon](icon.png)
+![Project Icon](img/icon2.png)
 
 ## Schedule
 
