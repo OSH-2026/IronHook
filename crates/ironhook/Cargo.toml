@@ -1,9 +1,0 @@
-[package]
-name = "ironhook"
-version.workspace = true
-description = "A high-performance, security-grade inline hook library designed for the Android ARM64 architecture."
-edition.workspace = true
-rust-version.workspace = true
-repository.workspace = true
-
-[dependencies]

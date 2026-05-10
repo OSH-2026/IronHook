@@ -1,5 +1,7 @@
 # IronHook
 
+> Code Repository: [https://github.com/USTC-XeF2/ironhook](https://github.com/USTC-XeF2/ironhook)
+
 ## Members
 
 - [Yuqi Fan PB24000188](https://github.com/Rosaya-qwq)
@@ -16,7 +18,7 @@ IronHook aims to solve the memory safety risks and complex call chain management
 
 # Project Icon
 
-![Project Icon](img/icon2.png)
+![Project Icon](img/icon.png)
 
 ## Schedule
 
