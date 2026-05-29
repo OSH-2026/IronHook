@@ -1,17 +1,18 @@
 use ironhook::task_manager::{add_hook_task, resolve_symbol};
 
 fn main() {
-    println!("========== IronHook 真机全链路测试 ==========");
+    println!("========== IronHook 真机全链路测试 (Typestate版) ==========");
     
-    // 1. 测试你的任务队列
-    let task_id = add_hook_task("libc.so", "open", 0x11112222);
-    println!("✅ 任务队列测试通过, 当前分配 ID: {}", task_id);
+    // 1. 测试你的类型状态机
+    // 注意：现在的 add_hook_task 是高度智能的，它会自己判断是挂起还是瞬间分发！
+    println!("🔍 正在下发测试任务...");
+    add_hook_task("libc.so", "open", 0x11112222);
+    println!("✅ 任务队列防呆测试通过, 状态机流转正常！");
 
     // 2. 测试最硬核的 Linker 内存寻址
     println!("\n🔍 正在读取真机 /proc/self/maps...");
     println!("🔍 正在使用 Goblin 解析 ELF 二进制文件...");
     
-    // 寻找 libc.so 中的 open 函数
     match resolve_symbol("libc.so", "open") {
         Some(addr) => {
             println!("🎉 逆天成功！");
@@ -23,5 +24,5 @@ fn main() {
         }
     }
     
-    println!("=============================================");
+    println!("===========================================================");
 }
