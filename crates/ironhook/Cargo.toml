@@ -8,3 +8,4 @@ repository.workspace = true
 
 [dependencies]
 goblin = "0.8"
+libc = "0.2"
