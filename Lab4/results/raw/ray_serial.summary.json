@@ -1,0 +1,12 @@
+{
+  "total_requests": 30,
+  "ok_requests": 30,
+  "failed_requests": 0,
+  "batch_elapsed_s": 105.47054357300112,
+  "avg_latency_s": 3.5155933785331097,
+  "p95_latency_s": 4.599993807998544,
+  "throughput_req_s": 0.2844396073415094,
+  "requests_by_server": {
+    "head-a-wsl": 30
+  }
+}

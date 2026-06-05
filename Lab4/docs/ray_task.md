@@ -17,7 +17,7 @@
   node-a:8080             node-b:8080
 ```
 
-每台机器运行一个 `llama-server`，Ray head 读取 `data/prompts_batch.jsonl`，使用 `scripts/ray_batch_infer.py` 将请求分配给不同 server。
+每台机器运行一个 `llama-server`，Ray head 读取 `data/prompts_batch.jsonl`，使用 `scripts/ray_batch_infer.py` 将请求分配给不同 server。本次实测 Ray head 运行在 Head A 的 WSL2 中，从机是通过手机热点访问的 VMware Ubuntu 虚拟机。
 
 资源不足时允许单机多进程模拟：
 
@@ -35,8 +35,8 @@
 
 | 节点 | IP | Ray 角色 | llama-server 端口 | CPU/内存/GPU | 模型和量化 |
 | --- | --- | --- | --- | --- | --- |
-| node-a | 待填 | head | 8080 | 待填 | 待填 |
-| node-b | 待填 | worker | 8080 | 待填 | 待填 |
+| `head-a-wsl` | `127.0.0.1`，WSL 本地访问 | head | 8080 | Intel i9-13900H，20 逻辑 CPU，15 GiB 内存，无 GPU | Qwen2.5-1.5B-Instruct Q4_K_M |
+| `worker-vm-c6h14` | `10.210.218.47` | HTTP 推理节点 | 8080 | Intel Core Ultra 9 185H，4 vCPU，7.7 GiB 内存，无 GPU | Qwen2.5-1.5B-Instruct Q4_K_M |
 
 ## 4. Prompt 数据集
 
@@ -74,13 +74,13 @@ curl http://<node-ip>:8080/completion \
 
 ## 6. Ray 集群启动
 
-Head 节点：
+Head 节点。本次 Ray 集群只在 Head A 的 WSL2 中启动，Ray Task 通过 HTTP 调用本机和从机的 `llama-server`：
 
 ```bash
-ray start --head --node-ip-address=<head-ip> --port=6379 --dashboard-host=0.0.0.0
+ray start --head --dashboard-host=0.0.0.0
 ```
 
-Worker 节点：
+如果需要让其他机器也加入 Ray 集群，可以使用下面的 worker 命令；本次最终结果没有依赖该方式：
 
 ```bash
 ray start --address='<head-ip>:6379'
@@ -102,13 +102,17 @@ ray status
 cp config/ray_servers.example.json config/ray_servers.json
 ```
 
-将 `servers` 改为实际机器：
+本次最终配置已保存为 `config/ray_servers.final.json`。实际内容为：
 
 ```json
 {
+  "endpoint_type": "completion",
+  "request_timeout_s": 180,
+  "n_predict": 128,
+  "temperature": 0.2,
   "servers": [
-    {"name": "node-a", "url": "http://192.168.1.10:8080", "weight": 1},
-    {"name": "node-b", "url": "http://192.168.1.11:8080", "weight": 1}
+    {"name": "head-a-wsl", "url": "http://127.0.0.1:8080", "weight": 1},
+    {"name": "worker-vm-c6h14", "url": "http://10.210.218.47:8080", "weight": 1}
   ]
 }
 ```
@@ -120,7 +124,7 @@ cp config/ray_servers.example.json config/ray_servers.json
 ```bash
 python3 scripts/ray_batch_infer.py \
   --mode serial \
-  --config config/ray_servers.json \
+  --config config/ray_servers.final.json \
   --prompts data/prompts_batch.jsonl \
   --out results/raw/ray_serial.jsonl
 ```
@@ -133,7 +137,7 @@ python3 scripts/ray_batch_infer.py \
 python3 scripts/ray_batch_infer.py \
   --mode ray-round-robin \
   --ray-address auto \
-  --config config/ray_servers.json \
+  --config config/ray_servers.final.json \
   --prompts data/prompts_batch.jsonl \
   --out results/raw/ray_round_robin.jsonl
 ```
@@ -146,12 +150,12 @@ python3 scripts/ray_batch_infer.py \
 python3 scripts/ray_batch_infer.py \
   --mode ray-weighted \
   --ray-address auto \
-  --config config/ray_servers.json \
+  --config config/ray_servers.final.json \
   --prompts data/prompts_batch.jsonl \
   --out results/raw/ray_weighted.jsonl
 ```
 
-在 `config/ray_servers.json` 中为更快的节点设置更高 `weight`。
+在 Ray server 配置中为更快的节点设置更高 `weight`。
 
 ### 8.4 Ray 延迟感知分配
 
@@ -160,7 +164,7 @@ python3 scripts/ray_batch_infer.py \
   --mode ray-latency-aware \
   --ray-address auto \
   --concurrency 4 \
-  --config config/ray_servers.json \
+  --config config/ray_servers.final.json \
   --prompts data/prompts_batch.jsonl \
   --out results/raw/ray_latency_aware.jsonl
 ```
@@ -178,10 +182,8 @@ python3 scripts/summarize_results.py results/raw/ray_*.jsonl \
 
 | 模式 | 总耗时 s | 平均延迟 s | P95 延迟 s | 吞吐 req/s | 失败数 |
 | --- | --- | --- | --- | --- | --- |
-| serial | 待填 | 待填 | 待填 | 待填 | 待填 |
-| ray-round-robin | 待填 | 待填 | 待填 | 待填 | 待填 |
-| ray-weighted | 选做 | 待填 | 待填 | 待填 | 待填 |
-| ray-latency-aware | 选做 | 待填 | 待填 | 待填 | 待填 |
+| serial | 105.471 | 3.516 | 4.600 | 0.284 | 0 |
+| ray-round-robin | 89.563 | 27.955 | 74.978 | 0.335 | 0 |
 
 ## 10. 分析要点
 
@@ -190,6 +192,7 @@ python3 scripts/summarize_results.py results/raw/ray_*.jsonl \
 3. prompt 长短不均会导致负载不均，轮询并不总是最优。
 4. 如果 llama-server 自身只能有效处理一个请求，节点内并发过高会造成排队。
 5. 多机环境中 HTTP 往返、Ray object store 序列化、节点时钟差异和网络拥塞都可能影响结果。
+6. 本次从机为 VMware 虚拟机且通过手机热点连接，平均延迟明显高于主机；轮询调度提升了批处理总吞吐，但也带来了更高的单请求尾延迟。
 
 ## 11. 必做项核对
 

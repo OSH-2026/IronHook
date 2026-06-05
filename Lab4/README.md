@@ -31,6 +31,6 @@
 
 ## 当前状态说明
 
-当前仓库环境中没有 GGUF 模型文件，也没有可访问的第二台实验机器，因此本文档不会伪造实测数据或截图。实测时请按 `docs/deployment.md` 与本地运行指南执行脚本，将生成的 `results/raw/*.jsonl`、`results/raw/*.csv`、终端截图和 Ray Dashboard 截图补入本目录。
+当前已完成 llama.cpp 主线任务的单机推理、参数扫描、质量评估和 RPC 分布式推理，也完成了 Ray 选择性必做任务的串行基线与 Ray 轮询批量推理对比。单机原始数据位于 `results/raw/llama_cli_benchmark_20260605_230453.jsonl` 与 `results/raw/llama_bench_20260605_231015_fixed.txt`；RPC 记录位于 `results/raw/rpc_inference_20260606.md`；Ray 记录位于 `results/raw/ray_serial.jsonl`、`results/raw/ray_round_robin.jsonl` 和 `results/raw/ray_summary.md`。
 
 本地运行指南位于 `Lab4/LOCAL_RUN_GUIDE.md`，已写入 `.gitignore`，不要提交。

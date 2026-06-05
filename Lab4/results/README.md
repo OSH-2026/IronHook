@@ -8,5 +8,6 @@
 | `llama_cli_benchmark_*.jsonl` | `scripts/llama_cli_benchmark.py` |
 | `ray_*.jsonl` | `scripts/ray_batch_infer.py` |
 | `ray_summary.md` | `scripts/summarize_results.py` |
+| `rpc_inference_20260606.md` | RPC 分布式推理记录 |
 
 `screenshots/` 保存终端、Ray Dashboard、RPC 推理成功等截图。截图不需要由脚本生成，但需要能证明命令和结果确实运行。

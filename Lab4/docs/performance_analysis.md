@@ -7,14 +7,15 @@
 | 主机 CPU | 13th Gen Intel(R) Core(TM) i9-13900H，20 逻辑 CPU，10 核 / 20 线程 |
 | 主机内存 | 15 GiB |
 | 主机 GPU | 本次单机测试未使用 GPU；`nvidia-smi`、`rocminfo` 未检测到可用 GPU |
-| 从机 CPU/内存/GPU | 多机 RPC 阶段待填写 |
-| 操作系统 | Ubuntu 24.04.4 LTS，WSL2，Linux 6.18.26.1-microsoft-standard-WSL2 |
+| 从机 CPU/内存/GPU | VMware Ubuntu 虚拟机 `c6h14-VMware-Virtual-Platform`；Intel(R) Core(TM) Ultra 9 185H，4 vCPU，内存 7.7 GiB，未检测到 CUDA |
+| 操作系统 | 主机为 Ubuntu 24.04.4 LTS，WSL2，Linux 6.18.26.1-microsoft-standard-WSL2；从机为 VMware Ubuntu 虚拟机 |
+| RPC/Ray 网络 | 手机热点局域网，VMware 桥接到热点网卡；从机地址 `10.210.218.47`，RPC 端口 `50052`，HTTP 端口 `8080` |
 | llama.cpp commit | `2016bf2b3bca10e49e06a00586a8a2fde9f6cc32`，build `b9528-2016bf2b3` |
 | 模型名称 | Qwen2.5-1.5B-Instruct GGUF |
 | GGUF 量化格式 | Q4_K_M |
 | 模型文件大小 | 1.1G，本地文件 `models/qwen2.5-1.5b-instruct-q4_k_m.gguf` |
 
-硬件和系统环境由 `scripts/collect_env.sh` 生成，原始记录放入 `results/raw/env_*.md`。
+硬件和系统环境由 `scripts/collect_env.sh` 生成，原始记录放入 `results/raw/env_*.md`。从机环境记录 `results/raw/env_c6h14.md` 中的网络地址是桥接调试前的 VMware NAT 快照，最终 RPC/Ray 运行地址以 `10.210.218.47` 为准。
 
 ## 2. 性能指标列表
 
@@ -109,7 +110,7 @@ python3 scripts/llama_cli_benchmark.py \
 | Prompt eval `pp512` | CPU | 8 | 256 | `199.57 ± 6.20 t/s` |
 | Decode `tg128` | CPU | 8 | 256 | `38.42 ± 3.65 t/s` |
 
-说明：`results/raw/llama_bench_20260605_231015.txt` 是一次无效记录，原因是新版 `llama-bench` 不再接受旧脚本里的 `-c/--ctx-size` 参数；脚本已改为 `-p/--n-prompt` 与 `-n/--n-gen`。
+说明：曾有一次旧参数导致的无效 `llama-bench` 记录，原因是新版 `llama-bench` 不再接受旧脚本里的 `-c/--ctx-size` 参数；无效记录已清理，脚本已改为 `-p/--n-prompt` 与 `-n/--n-gen`。
 
 ### 5.1 参数影响分析
 
@@ -147,45 +148,104 @@ python3 scripts/llama_cli_benchmark.py \
 
 ## 7. RPC 多机推理结果
 
-拓扑：
+### 7.1 拓扑与部署
+
+本次 RPC 分布式推理的主机和从机不在同一台物理机器上：主机是连接手机热点的另一台电脑中的 WSL2，运行 `llama-cli`；从机是另一台电脑中的 VMware Ubuntu 虚拟机，运行 `rpc-server`。虚拟机最初拿到过 `192.168.247.x` 的 VMware NAT 地址，该地址只在从机 Windows 宿主机内部可达，不能被热点中的另一台电脑直接访问。因此最终将 VMware 网络改为桥接到热点 Wi-Fi 网卡，使虚拟机获得热点局域网地址 `10.210.218.47`。
+
+从机启动命令：
+
+```bash
+cd Lab4
+source config/experiment.env
+RPC_EXTRA_ARGS="-H 0.0.0.0 -t 4" RPC_PORT=50052 ./scripts/start_rpc_server.sh
+```
+
+主机连接命令：
+
+```bash
+cd Lab4
+source config/experiment.env
+RPC_SERVERS="10.210.218.47:50052" \
+PROMPT="请解释 llama.cpp RPC 后端为什么可能受网络延迟影响。" \
+./scripts/run_rpc_inference.sh
+```
+
+实测截图：
+
+| 截图 | 内容 |
+| --- | --- |
+| `results/screenshots/rpc_worker_server_vm_c6h14.png` | 从机 `rpc-server` 绑定 `0.0.0.0:50052`，使用 CPU 后端，并接收到主机连接 |
+| `results/screenshots/rpc_host_inference_desktop_ck52vt6.png` | 主机 `llama-cli` 通过 `--rpc 10.210.218.47:50052` 完成推理 |
+
+拓扑表：
 
 | 节点 | IP | 角色 | 后端 | 命令 |
 | --- | --- | --- | --- | --- |
-| host | 待填 | 主机 `llama-cli` | 待填 | `docs/commands.md` |
-| worker-a | 待填 | 从机 `rpc-server` | 待填 | `docs/commands.md` |
+| host / `DESKTOP-CK52VT6` | 热点局域网地址未单独截图记录 | 主机 `llama-cli`，加载本地 GGUF 模型并连接 RPC 后端 | WSL2 CPU | `docs/commands.md` 第 8 节 |
+| worker-a / `c6h14-VMware-Virtual-Platform` | `10.210.218.47` | 从机 `rpc-server`，提供远程计算后端 | VMware Ubuntu CPU，无 CUDA | `docs/commands.md` 第 7 节 |
 
-结果表：
+### 7.2 RPC 实测结果
 
-| 模式 | Prompt | 总延迟 s | Decode t/s | 网络 | 备注 |
-| --- | --- | --- | --- | --- | --- |
-| 单机 | 待填 | 待填 | 待填 | 无 RPC | 待填 |
-| RPC 1 从机 | 待填 | 待填 | 待填 | 待填 | 待填 |
-| RPC 多从机 | 选做 | 待填 | 待填 | 待填 | 待填 |
+| 模式 | Prompt/任务 | 总延迟 s | Prompt eval t/s | Decode / Generation t/s | 网络 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 单机 `llama-bench` | `pp512` / `tg128` | 不适用 | `199.57 ± 6.20` | `38.42 ± 3.65` | 无 RPC | CPU 单机基线，见 `results/raw/llama_bench_20260605_231015_fixed.txt` |
+| RPC 1 从机 | “请解释 llama.cpp RPC 后端为什么可能受网络延迟影响。” | 截图未单独记录 wall time | `27.4` | `12.3` | 手机热点，worker `10.210.218.47:50052` | 成功完成分布式推理，见 `rpc_host_inference_desktop_ck52vt6.png` |
+
+说明：单机 `llama-bench` 与 RPC 截图使用的 prompt 和统计方式不同，数值不能作为严格同配置对比；但 RPC 生成吞吐低于单机 CPU 基线，足以说明当前手机热点与 CPU 从机组合没有带来加速收益。
 
 RPC 分析要点：
 
-1. RPC 不保证比单机快，特别是模型较小或网络较慢时，通信和同步开销可能超过计算收益。
-2. 若从机性能弱于主机，计算划分可能导致主机等待从机，出现拖尾延迟。
-3. 有线局域网通常比无线网络更稳定，首 token 延迟和总延迟更低。
-4. RPC 的收益更可能出现在模型较大、单机内存不足或从机有更强 GPU 后端的场景。
+1. `rpc-server` 必须绑定 `0.0.0.0`，否则默认只监听本机回环地址，主机无法从热点局域网连入。
+2. VMware NAT 地址 `192.168.247.x` 不适用于本实验拓扑，因为主机位于另一台电脑的 WSL2 中，不能直接访问从机 Windows 内部的 NAT 网段；桥接后获得的 `10.210.218.47` 才是可达地址。
+3. 从机没有 CUDA，实际使用 CPU 后端。截图中 `ggml_cuda_init: failed to initialize CUDA: no CUDA-capable device is detected` 是预期现象，不影响 CPU RPC 后端启动。
+4. 手机热点的链路延迟、带宽和抖动弱于有线局域网；同时 Qwen2.5-1.5B Q4_K_M 模型较小，单机 CPU 已能较快推理，RPC 的通信和同步开销容易超过远端计算收益。
+5. 当前结果说明 RPC 已经完成主从协同推理，但不是性能最优部署。更可能受益的场景是模型更大、单机内存不足、从机有更强 GPU，或网络换成稳定有线局域网。
 
 ## 8. Ray 批量推理结果
 
-运行命令见 `docs/ray_task.md`。
+### 8.1 部署方式
+
+Ray 选择性必做任务采用“Head A 本地 Ray 集群 + 两个 llama-server endpoint”的部署方式。Ray head 运行在主机 `DESKTOP-CK52VT6` 的 WSL2 内；两个 HTTP 推理服务分别是主机 WSL 本地 `llama-server` 和从机 VMware Ubuntu 的 `llama-server`。Ray Task 负责把 30 个 prompt 分发到两个 HTTP endpoint。
+
+配置文件记录在 `config/ray_servers.final.json`：
+
+| 节点 | URL | 角色 | 说明 |
+| --- | --- | --- | --- |
+| `head-a-wsl` | `http://127.0.0.1:8080` | Ray head 所在主机的本地 `llama-server` | 串行基线只使用该节点 |
+| `worker-vm-c6h14` | `http://10.210.218.47:8080` | 从机 VMware Ubuntu 的 `llama-server` | 通过手机热点访问 |
+
+实测截图：
+
+| 截图 | 内容 |
+| --- | --- |
+| `results/screenshots/ray_status.png` | `ray status` 显示 1 个 active Ray 节点，资源为 20 CPU、9.33 GiB memory |
+| `results/screenshots/ray_host.png` | 主机 `llama-server` 在 Ray 批量任务中处理请求，生成吞吐约 19-23 t/s |
+| `results/screenshots/ray_workers.png` | 从机 `llama-server` 在 Ray 批量任务中处理请求，生成吞吐约 5.8 t/s |
+
+### 8.2 批量推理结果
+
+运行命令见 `docs/ray_task.md`，原始结果见 `results/raw/ray_serial.jsonl`、`results/raw/ray_round_robin.jsonl` 和 `results/raw/ray_summary.md`。
 
 | 模式 | Prompt 数 | 总耗时 s | 平均延迟 s | P95 延迟 s | 吞吐 req/s | 失败数 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 串行 | 30 | 待填 | 待填 | 待填 | 待填 | 待填 | 单进程逐个请求 |
-| Ray 轮询 | 30 | 待填 | 待填 | 待填 | 待填 | 待填 | 多节点并发 |
-| Ray 延迟感知 | 选做 | 待填 | 待填 | 待填 | 待填 | 待填 | 按历史平均延迟分配 |
+| 串行 | 30 | 105.471 | 3.516 | 4.600 | 0.284 | 0 | 单进程逐个请求，只访问 `head-a-wsl` |
+| Ray 轮询 | 30 | 89.563 | 27.955 | 74.978 | 0.335 | 0 | Ray Task 并发提交，`head-a-wsl` 和 `worker-vm-c6h14` 各 15 个请求 |
+
+节点级延迟：
+
+| 模式 | 节点 | 请求数 | 平均延迟 s | 最短/最长 s |
+| --- | --- | --- | --- | --- |
+| 串行 | `head-a-wsl` | 30 | 3.516 | 2.515/4.664 |
+| Ray 轮询 | `head-a-wsl` | 15 | 10.305 | 2.822/17.269 |
+| Ray 轮询 | `worker-vm-c6h14` | 15 | 45.604 | 16.659/76.113 |
 
 Ray 分析要点：
 
-1. Ray 的价值是提高批量请求吞吐，而不是加速单个 prompt。
-2. 如果每个请求很短，Ray 调度开销和 HTTP 往返会占比较高。
-3. llama-server 常驻后避免重复加载模型，因此批量推理应复用服务进程。
-4. 多机并行受最慢节点、网络延迟、每台 server 并发能力和 prompt 长度分布影响。
-5. 异构机器上固定轮询可能造成慢节点堆积，延迟感知或按权重分配通常更合理。
+1. Ray 轮询将 30 个请求并发分发到两个 server，总耗时从 105.471s 降到 89.563s，批处理耗时降低约 15.1%，吞吐从 0.284 req/s 提高到 0.335 req/s，提升约 17.8%。
+2. Ray 轮询的平均单请求延迟和 P95 延迟明显高于串行，并不矛盾：串行模式每次只跑一个请求，而 Ray 模式把请求并发提交到两个 server，队列等待时间被计入单请求延迟。
+3. 从机 `worker-vm-c6h14` 的平均延迟 45.604s，明显高于主机的 10.305s；截图中从机生成吞吐约 5.8 t/s，主机约 19-23 t/s，异构性能差异导致轮询调度出现慢节点拖尾。
+4. 手机热点带来的网络抖动和从机 VMware 虚拟化开销会进一步放大慢请求尾延迟，尤其是输出 token 数较长的 prompt。
+5. 更合理的改进方向是按节点性能设置权重，减少从机分配比例，或采用延迟感知调度，把新请求优先发给历史延迟更低且当前 in-flight 更少的 server。
 
 ## 9. 结论
 
@@ -197,4 +257,15 @@ Ray 分析要点：
 4. 12 线程配置在 WSL2 中明显变慢，说明线程数并非越高越好，需要结合物理核心、调度环境和内存带宽观察。
 5. 质量评估中代码解释和课程问答表现较好，但逻辑推理题出现错误，后续分析需要同时关注性能和输出正确性。
 
-RPC 和 Ray 阶段待多机数据补充后完成。
+RPC 阶段结论：
+
+1. 主机 `DESKTOP-CK52VT6` 成功通过手机热点连接 VMware 从机 `10.210.218.47:50052`，完成 llama.cpp RPC 分布式推理。
+2. 从机 `rpc-server` 运行在 CPU 后端，无 CUDA；服务端截图显示多次 `Accepted client connection`，证明主机请求确实到达从机。
+3. RPC 推理截图显示 Prompt eval 约 27.4 t/s，Generation 约 12.3 t/s，低于单机 CPU `llama-bench` 的 decode 约 38.42 t/s。主要原因是手机热点网络开销、从机 CPU 后端性能有限，以及小模型本身不足以摊薄 RPC 通信成本。
+4. 本次实验验证了 llama.cpp 的 RPC 部署链路、网络可达性、远程后端连接和推理正确性；性能上不追求加速，而是体现分布式推理系统中网络、异构硬件和任务划分的影响。
+
+Ray 阶段结论：
+
+1. Ray 必做任务已完成 30 个 prompt 的串行基线与 Ray 轮询并发调度对比，两个模式均 30/30 成功、0 失败。
+2. Ray 轮询提高了批处理吞吐和总耗时表现，但因为从机明显慢于主机，单请求平均延迟和 P95 延迟变差。
+3. 该结果符合异构多机调度的常见现象：并发可以改善整体吞吐，但固定轮询在慢节点存在时会产生尾延迟。报告中因此不把 Ray 轮询描述为单请求加速，而是描述为批量吞吐优化。

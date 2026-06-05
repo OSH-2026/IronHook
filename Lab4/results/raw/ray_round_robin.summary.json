@@ -1,0 +1,13 @@
+{
+  "total_requests": 30,
+  "ok_requests": 30,
+  "failed_requests": 0,
+  "batch_elapsed_s": 89.56260023499999,
+  "avg_latency_s": 27.954944535466772,
+  "p95_latency_s": 74.97817565600053,
+  "throughput_req_s": 0.33496124410506295,
+  "requests_by_server": {
+    "head-a-wsl": 15,
+    "worker-vm-c6h14": 15
+  }
+}

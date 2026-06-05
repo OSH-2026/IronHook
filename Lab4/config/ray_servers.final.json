@@ -1,0 +1,20 @@
+{
+  "endpoint_type": "completion",
+  "request_timeout_s": 180,
+  "n_predict": 128,
+  "temperature": 0.2,
+  "servers": [
+    {
+      "name": "head-a-wsl",
+      "url": "http://127.0.0.1:8080",
+      "weight": 1,
+      "notes": "Head A WSL local llama-server."
+    },
+    {
+      "name": "worker-vm-c6h14",
+      "url": "http://10.210.218.47:8080",
+      "weight": 1,
+      "notes": "VMware Ubuntu worker connected through the phone hotspot."
+    }
+  ]
+}

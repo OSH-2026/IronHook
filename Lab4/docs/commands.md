@@ -76,7 +76,7 @@ THREADS=8 BATCH_SIZE=256 N_PROMPT=512 N_GEN=128 REPETITIONS=3 N_GPU_LAYERS=0 ./s
 ```bash
 cd Lab4
 source config/experiment.env
-RPC_EXTRA_ARGS="-H 0.0.0.0" RPC_PORT=50052 ./scripts/start_rpc_server.sh
+RPC_EXTRA_ARGS="-H 0.0.0.0 -t 4" RPC_PORT=50052 ./scripts/start_rpc_server.sh
 ```
 
 ## 8. RPC 主机
@@ -86,10 +86,12 @@ RPC_EXTRA_ARGS="-H 0.0.0.0" RPC_PORT=50052 ./scripts/start_rpc_server.sh
 ```bash
 cd Lab4
 source config/experiment.env
-RPC_SERVERS="192.168.1.11:50052" \
+RPC_SERVERS="10.210.218.47:50052" \
 PROMPT="请解释 llama.cpp RPC 后端为什么可能受网络延迟影响。" \
 ./scripts/run_rpc_inference.sh
 ```
+
+本次实测网络为手机热点，VMware 从机桥接到热点网卡后获得地址 `10.210.218.47`。如果虚拟机地址是 `192.168.247.x`，说明仍在 VMware NAT 网段，热点中的另一台电脑不能直接访问该地址。
 
 ## 9. llama-server
 
@@ -113,10 +115,10 @@ curl http://127.0.0.1:8080/health
 Head：
 
 ```bash
-ray start --head --node-ip-address=192.168.1.10 --port=6379 --dashboard-host=0.0.0.0
+ray start --head --dashboard-host=0.0.0.0
 ```
 
-Worker：
+本次最终结果中 Ray Task 运行在 Head A WSL 内，通过 HTTP 调用本机和从机的 `llama-server`，没有让 VMware 从机加入 Ray 集群。若需要多 Ray 节点，可执行：
 
 ```bash
 ray start --address='192.168.1.10:6379'
@@ -135,7 +137,7 @@ ray status
 ```bash
 python3 scripts/ray_batch_infer.py \
   --mode serial \
-  --config config/ray_servers.json \
+  --config config/ray_servers.final.json \
   --prompts data/prompts_batch.jsonl \
   --out results/raw/ray_serial.jsonl
 ```
@@ -146,7 +148,7 @@ Ray 轮询：
 python3 scripts/ray_batch_infer.py \
   --mode ray-round-robin \
   --ray-address auto \
-  --config config/ray_servers.json \
+  --config config/ray_servers.final.json \
   --prompts data/prompts_batch.jsonl \
   --out results/raw/ray_round_robin.jsonl
 ```
@@ -168,7 +170,8 @@ python3 scripts/summarize_results.py results/raw/ray_*.jsonl \
 | `quality_reasoning_desktop_ck52vt6.png` | 第 3 或第 5 节，推理题 |
 | `quality_osh_desktop_ck52vt6.png` | 第 3 或第 5 节，课程相关问题 |
 | `llama_benchmark_table.png` | 第 4 或 6 节，可后续补截图 |
-| `rpc_worker_server.png` | 第 7 节 |
-| `rpc_inference_success.png` | 第 8 节 |
+| `rpc_worker_server_vm_c6h14.png` | 第 7 节 |
+| `rpc_host_inference_desktop_ck52vt6.png` | 第 8 节 |
 | `ray_status.png` | 第 10 节 |
-| `ray_batch_result.png` | 第 11 节 |
+| `ray_host.png` | 第 9 和第 11 节，主机 `llama-server` 请求处理日志 |
+| `ray_workers.png` | 第 9 和第 11 节，从机 `llama-server` 请求处理日志 |

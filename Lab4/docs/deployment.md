@@ -145,6 +145,8 @@ nc -vz 192.168.1.11 50052
 4. 主机先 `ping <worker-ip>`，再用 `nc -vz <worker-ip> 50052` 测端口。端口不通时先检查防火墙、校园网/热点隔离、WSL2 NAT 和从机是否绑定到 `0.0.0.0`。
 5. 主机推理时 `RPC_SERVERS` 写从机的 `<worker-ip>:50052`。多台从机用英文逗号连接。
 
+本次实测使用手机热点局域网：主机为 `DESKTOP-CK52VT6` 的 WSL2，从机为 VMware Ubuntu 虚拟机 `c6h14-VMware-Virtual-Platform`。虚拟机桥接到热点 Wi-Fi 后获得地址 `10.210.218.47`，主机使用 `RPC_SERVERS="10.210.218.47:50052"` 连接。从机若拿到 `192.168.247.x`，表示仍在 VMware NAT 网段，该地址不能被热点中的另一台电脑直接访问。
+
 ### 6.2 从机启动 rpc-server
 
 在每台从机上执行：
@@ -152,7 +154,7 @@ nc -vz 192.168.1.11 50052
 ```bash
 cd Lab4
 source config/experiment.env
-RPC_EXTRA_ARGS="-H 0.0.0.0" RPC_PORT=50052 ./scripts/start_rpc_server.sh
+RPC_EXTRA_ARGS="-H 0.0.0.0 -t 4" RPC_PORT=50052 ./scripts/start_rpc_server.sh
 ```
 
 ### 6.3 主机连接 RPC 后端推理
@@ -217,13 +219,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Head 节点：
+Head 节点。本次最终结果采用 Head A WSL 内本地 Ray head，Ray Task 通过 HTTP 访问两个 `llama-server`：
 
 ```bash
-ray start --head --node-ip-address=192.168.1.10 --port=6379 --dashboard-host=0.0.0.0
+ray start --head --dashboard-host=0.0.0.0
 ```
 
-Worker 节点：
+若需要让其他机器加入 Ray 集群，再在 worker 节点执行：
 
 ```bash
 ray start --address='192.168.1.10:6379'
@@ -240,7 +242,7 @@ ray status
 ```bash
 python3 scripts/ray_batch_infer.py \
   --mode serial \
-  --config config/ray_servers.json \
+  --config config/ray_servers.final.json \
   --prompts data/prompts_batch.jsonl \
   --out results/raw/ray_serial.jsonl
 ```
@@ -251,7 +253,7 @@ python3 scripts/ray_batch_infer.py \
 python3 scripts/ray_batch_infer.py \
   --mode ray-round-robin \
   --ray-address auto \
-  --config config/ray_servers.json \
+  --config config/ray_servers.final.json \
   --prompts data/prompts_batch.jsonl \
   --out results/raw/ray_round_robin.jsonl
 ```
@@ -275,9 +277,10 @@ python3 scripts/summarize_results.py results/raw/ray_*.jsonl \
 | `quality_reasoning_desktop_ck52vt6.png` | 单机推理题质量评估 |
 | `quality_osh_desktop_ck52vt6.png` | 单机课程相关问题质量评估 |
 | `llama_benchmark_table.png` | 参数扫描或 `llama-bench` 结果，可后续补截图 |
-| `rpc_worker_server.png` | 从机 `rpc-server` 启动并接收连接 |
-| `rpc_inference_success.png` | 主机 RPC 推理成功输出 |
+| `rpc_worker_server_vm_c6h14.png` | 从机 `rpc-server` 启动并接收连接 |
+| `rpc_host_inference_desktop_ck52vt6.png` | 主机 RPC 推理成功输出 |
 | `ray_status.png` | `ray status` 或 Ray Dashboard |
-| `ray_batch_result.png` | Ray 批量推理结果汇总 |
+| `ray_host.png` | 主机 `llama-server` 批量推理日志 |
+| `ray_workers.png` | 从机 `llama-server` 批量推理日志 |
 
 截图需要能看出机器名、命令或结果文件名，方便助教复现。
