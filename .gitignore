@@ -18,7 +18,17 @@ Thumbs.db
 *.gcno
 *.gcov
 *.log
+__pycache__/
+*.py[cod]
 /tmp
 
 .env
 *.local
+
+# Lab4 local-only notes and large local artifacts.
+Lab4/LOCAL_RUN_GUIDE.md
+Lab4/models/
+Lab4/llama.cpp/
+Lab4/.venv/
+Lab4/config/experiment.env
+Lab4/config/ray_servers.json

@@ -1,0 +1,5 @@
+{"id":"quality_cn_qa","category":"中文问答","prompt":"请用三句话解释什么是大语言模型的量化，并说明它为什么能降低本地推理的内存占用。","n_predict":160}
+{"id":"quality_summary","category":"摘要","prompt":"请将下面这段话压缩成三条要点：llama.cpp 是一个轻量级大语言模型推理框架，主要使用 C/C++ 实现，支持 CPU、CUDA、Metal 等后端，并通过 GGUF 格式加载量化模型。在普通个人电脑上，它常用于低成本本地推理和实验性部署。","n_predict":160}
+{"id":"quality_code","category":"代码解释","prompt":"解释下面这段 Python 代码的功能，并指出它在并发环境下可能有什么问题：\n\ncounter = 0\n\ndef add_one():\n    global counter\n    counter += 1\n","n_predict":192}
+{"id":"quality_reasoning","category":"推理题","prompt":"一个任务先需要 2 秒读取模型文件，再需要 6 秒完成推理。如果三个请求串行执行需要多久？如果模型只加载一次，后三个请求复用同一个常驻服务，总耗时大约是多少？请说明推理过程。","n_predict":192}
+{"id":"quality_osh","category":"课程相关","prompt":"在操作系统和分布式系统角度，分析 llama.cpp RPC 推理可能受到哪些瓶颈影响，至少列出四点。","n_predict":220}

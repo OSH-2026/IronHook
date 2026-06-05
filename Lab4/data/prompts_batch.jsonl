@@ -1,0 +1,30 @@
+{"id":"batch_001","category":"课程知识问答","prompt":"用两句话解释进程和线程的区别。","n_predict":96}
+{"id":"batch_002","category":"课程知识问答","prompt":"什么是上下文切换？它为什么会带来开销？","n_predict":96}
+{"id":"batch_003","category":"课程知识问答","prompt":"解释虚拟内存中的页表作用。","n_predict":96}
+{"id":"batch_004","category":"课程知识问答","prompt":"为什么 mmap 加载模型可能比直接读入文件更快？","n_predict":112}
+{"id":"batch_005","category":"课程知识问答","prompt":"什么是 I/O 缓存？它如何影响模型加载时间？","n_predict":112}
+{"id":"batch_006","category":"课程知识问答","prompt":"解释 CPU cache miss 对推理速度的影响。","n_predict":112}
+{"id":"batch_007","category":"课程知识问答","prompt":"什么是吞吐量和延迟？二者为什么可能冲突？","n_predict":112}
+{"id":"batch_008","category":"课程知识问答","prompt":"解释分布式系统中的拖尾延迟。","n_predict":112}
+{"id":"batch_009","category":"代码解释","prompt":"解释 Python 中 subprocess.run(capture_output=True, text=True) 的作用。","n_predict":112}
+{"id":"batch_010","category":"代码解释","prompt":"解释 shell 命令 nc -vz 192.168.1.11 50052 的用途。","n_predict":96}
+{"id":"batch_011","category":"代码解释","prompt":"解释 JSONL 文件为什么适合保存批量推理结果。","n_predict":112}
+{"id":"batch_012","category":"代码解释","prompt":"解释 Ray remote task 和普通 Python 函数调用的区别。","n_predict":128}
+{"id":"batch_013","category":"代码解释","prompt":"解释 HTTP POST 请求中的 Content-Type: application/json。","n_predict":96}
+{"id":"batch_014","category":"代码解释","prompt":"解释为什么服务端常驻进程能避免重复加载模型。","n_predict":112}
+{"id":"batch_015","category":"摘要","prompt":"将下面内容总结为两点：Ray 适合把大量互相独立的任务分发给多个节点执行。对于 LLM 批量推理，Ray 不会让单个请求的 token 生成更快，但能提升一批请求的整体吞吐。","n_predict":112}
+{"id":"batch_016","category":"摘要","prompt":"将下面内容总结为三点：RPC 分布式推理需要主机和从机通过网络协作。网络延迟、带宽、同步等待和节点性能差异都会影响最终速度。小模型上 RPC 可能不如单机快。","n_predict":128}
+{"id":"batch_017","category":"摘要","prompt":"将下面内容改写为简短实验结论：调整线程数能改善 CPU 利用率，但线程过多可能造成调度开销和缓存竞争；batch size 增大可能提升吞吐，但也会增加内存占用。","n_predict":128}
+{"id":"batch_018","category":"摘要","prompt":"将下面内容压缩为一句话：量化格式会影响模型文件大小、内存占用、推理速度和输出质量。Q4 通常更省内存，Q8 通常质量更接近原模型但资源开销更大。","n_predict":96}
+{"id":"batch_019","category":"摘要","prompt":"总结下面内容：Ray Dashboard 可以观察集群节点、任务状态和资源占用，实验截图应保存 ray status 或 Dashboard 页面以证明集群运行。","n_predict":96}
+{"id":"batch_020","category":"摘要","prompt":"总结下面内容：实验报告不应只给出性能数字，还需要解释数字背后的系统原因，例如 I/O、内存、并发、网络和调度策略。","n_predict":112}
+{"id":"batch_021","category":"推理题","prompt":"如果一个节点平均延迟 4 秒，另一个节点平均延迟 8 秒，轮询分配 20 个请求可能有什么问题？","n_predict":128}
+{"id":"batch_022","category":"推理题","prompt":"如果每个 Ray 任务本身只运行 50 毫秒，Ray 调度开销会如何影响吞吐？","n_predict":128}
+{"id":"batch_023","category":"推理题","prompt":"为什么无线局域网上的 RPC 推理可能比有线局域网更不稳定？","n_predict":128}
+{"id":"batch_024","category":"推理题","prompt":"如果 prompt 长度差异很大，固定轮询调度为什么可能导致尾部请求拖慢总耗时？","n_predict":128}
+{"id":"batch_025","category":"推理题","prompt":"若 GPU offload 后显存不足导致频繁换入换出，性能可能如何变化？","n_predict":128}
+{"id":"batch_026","category":"系统分析","prompt":"从操作系统角度分析 llama.cpp 的内存占用来源。","n_predict":160}
+{"id":"batch_027","category":"系统分析","prompt":"从网络角度分析 llama.cpp RPC 的主要开销。","n_predict":160}
+{"id":"batch_028","category":"系统分析","prompt":"从调度角度分析 Ray 批量推理为什么能提升吞吐。","n_predict":160}
+{"id":"batch_029","category":"系统分析","prompt":"从实验复现角度说明为什么需要记录命令、配置和截图。","n_predict":160}
+{"id":"batch_030","category":"系统分析","prompt":"从资源隔离角度分析单机多进程模拟 Ray 多机实验的局限。","n_predict":160}

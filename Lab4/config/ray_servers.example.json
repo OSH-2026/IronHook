@@ -1,0 +1,20 @@
+{
+  "endpoint_type": "completion",
+  "request_timeout_s": 180,
+  "n_predict": 128,
+  "temperature": 0.2,
+  "servers": [
+    {
+      "name": "node-a",
+      "url": "http://127.0.0.1:8080",
+      "weight": 1,
+      "notes": "Replace with the head node llama-server URL."
+    },
+    {
+      "name": "node-b",
+      "url": "http://127.0.0.1:8081",
+      "weight": 1,
+      "notes": "Replace with the worker node llama-server URL."
+    }
+  ]
+}

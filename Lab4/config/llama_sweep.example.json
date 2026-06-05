@@ -1,0 +1,29 @@
+{
+  "default_n_predict": 128,
+  "configs": [
+    {
+      "name": "baseline",
+      "args": ["--threads", "8", "--ctx-size", "2048", "--batch-size", "256", "--temp", "0.2"]
+    },
+    {
+      "name": "threads_half",
+      "args": ["--threads", "4", "--ctx-size", "2048", "--batch-size", "256", "--temp", "0.2"]
+    },
+    {
+      "name": "threads_full",
+      "args": ["--threads", "12", "--ctx-size", "2048", "--batch-size", "256", "--temp", "0.2"]
+    },
+    {
+      "name": "batch_large",
+      "args": ["--threads", "8", "--ctx-size", "2048", "--batch-size", "512", "--temp", "0.2"]
+    },
+    {
+      "name": "no_mmap",
+      "args": ["--threads", "8", "--ctx-size", "2048", "--batch-size", "256", "--temp", "0.2", "--no-mmap"]
+    },
+    {
+      "name": "gpu_offload",
+      "args": ["--threads", "8", "--ctx-size", "2048", "--batch-size", "256", "--n-gpu-layers", "20", "--temp", "0.2"]
+    }
+  ]
+}
