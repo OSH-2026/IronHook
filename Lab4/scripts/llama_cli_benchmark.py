@@ -67,6 +67,7 @@ def run_one(args, config, prompt, out_dir, run_id, use_time):
         prompt["prompt"],
         "-n",
         str(n_predict),
+        "--single-turn",
     ] + list(config.get("args", []))
 
     wrapped = command

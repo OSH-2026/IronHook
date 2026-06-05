@@ -90,6 +90,7 @@ source config/experiment.env
   -m "$MODEL_PATH" \
   -p "请用三句话解释操作系统中的进程调度。" \
   -n 128 \
+  --single-turn \
   --threads 8 \
   --ctx-size 2048 \
   --batch-size 256 \
@@ -136,6 +137,14 @@ ping 192.168.1.11
 nc -vz 192.168.1.11 50052
 ```
 
+主从连接检查流程：
+
+1. 两台机器都进入各自的 `Lab4` 目录，确认 `source config/experiment.env` 后能执行 `"$LLAMA_CPP_DIR/build/bin/rpc-server" --help`。
+2. 从机用 `ip addr` 查自己的局域网 IP。Linux 物理机通常看 `wlan0`、`enp*` 或 `eth0`；WSL2 的 `172.*` 地址通常只在宿主机内可见，跨电脑连接应优先使用 Windows 宿主机局域网 IP，并配置端口转发或直接在宿主 Linux/虚拟机中运行。
+3. 从机启动 `rpc-server` 时绑定 `0.0.0.0`，否则默认只监听 `127.0.0.1`，主机无法连入。
+4. 主机先 `ping <worker-ip>`，再用 `nc -vz <worker-ip> 50052` 测端口。端口不通时先检查防火墙、校园网/热点隔离、WSL2 NAT 和从机是否绑定到 `0.0.0.0`。
+5. 主机推理时 `RPC_SERVERS` 写从机的 `<worker-ip>:50052`。多台从机用英文逗号连接。
+
 ### 6.2 从机启动 rpc-server
 
 在每台从机上执行：
@@ -143,7 +152,7 @@ nc -vz 192.168.1.11 50052
 ```bash
 cd Lab4
 source config/experiment.env
-RPC_PORT=50052 ./scripts/start_rpc_server.sh
+RPC_EXTRA_ARGS="-H 0.0.0.0" RPC_PORT=50052 ./scripts/start_rpc_server.sh
 ```
 
 ### 6.3 主机连接 RPC 后端推理
@@ -163,6 +172,15 @@ PROMPT="请解释 llama.cpp RPC 后端为什么可能受网络延迟影响。" \
 ```bash
 RPC_SERVERS="192.168.1.11:50052,192.168.1.12:50052" ./scripts/run_rpc_inference.sh
 ```
+
+如果从机运行在 WSL2 中，常见做法是在 Windows 管理员 PowerShell 中把 Windows 宿主机端口转发到 WSL2：
+
+```powershell
+netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=50052 connectaddress=<wsl-ip> connectport=50052
+New-NetFirewallRule -DisplayName "llama-rpc-50052" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 50052
+```
+
+其中 `<wsl-ip>` 是从机 WSL2 内 `ip addr` 查到的地址。若两台机器都能直接运行 Linux，则不需要这一步。
 
 ## 7. llama-server 部署
 
@@ -251,8 +269,12 @@ python3 scripts/summarize_results.py results/raw/ray_*.jsonl \
 
 | 文件名建议 | 内容 |
 | --- | --- |
-| `single_inference_success.png` | 单机 `llama-cli` 成功推理终端输出 |
-| `llama_benchmark_table.png` | 参数扫描或 `llama-bench` 结果 |
+| `quality_cn_qa_desktop_ck52vt6.png` | 单机中文问答质量评估 |
+| `quality_summary_desktop_ck52vt6.png` | 单机摘要质量评估 |
+| `quality_code_desktop_ck52vt6.png` | 单机代码解释质量评估 |
+| `quality_reasoning_desktop_ck52vt6.png` | 单机推理题质量评估 |
+| `quality_osh_desktop_ck52vt6.png` | 单机课程相关问题质量评估 |
+| `llama_benchmark_table.png` | 参数扫描或 `llama-bench` 结果，可后续补截图 |
 | `rpc_worker_server.png` | 从机 `rpc-server` 启动并接收连接 |
 | `rpc_inference_success.png` | 主机 RPC 推理成功输出 |
 | `ray_status.png` | `ray status` 或 Ray Dashboard |

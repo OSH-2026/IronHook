@@ -21,6 +21,7 @@ exec "$llama_cli" \
   -m "$model" \
   -p "$prompt" \
   -n "$n_predict" \
+  --single-turn \
   --threads "$threads" \
   --ctx-size "$ctx_size" \
   --batch-size "$batch_size" \

@@ -4,8 +4,12 @@
 
 | 文件名 | 内容 |
 | --- | --- |
-| `single_inference_success.png` | 单机 `llama-cli` 成功推理 |
-| `llama_benchmark_table.png` | 参数扫描或 `llama-bench` 结果 |
+| `quality_cn_qa_desktop_ck52vt6.png` | 单机中文问答质量评估 |
+| `quality_summary_desktop_ck52vt6.png` | 单机摘要质量评估 |
+| `quality_code_desktop_ck52vt6.png` | 单机代码解释质量评估 |
+| `quality_reasoning_desktop_ck52vt6.png` | 单机推理题质量评估 |
+| `quality_osh_desktop_ck52vt6.png` | 单机课程相关问题质量评估 |
+| `llama_benchmark_table.png` | 参数扫描或 `llama-bench` 结果，可后续补截图 |
 | `rpc_worker_server.png` | 从机 `rpc-server` 启动并监听端口 |
 | `rpc_inference_success.png` | 主机通过 `--rpc` 成功推理 |
 | `ray_status.png` | `ray status` 或 Ray Dashboard |

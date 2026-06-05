@@ -39,6 +39,7 @@ git -C "$LLAMA_CPP_DIR" rev-parse HEAD
   -m "$MODEL_PATH" \
   -p "请用三句话解释操作系统中的进程调度。" \
   -n 128 \
+  --single-turn \
   --threads 8 \
   --ctx-size 2048 \
   --batch-size 256 \
@@ -65,7 +66,7 @@ python3 scripts/llama_cli_benchmark.py \
 ## 6. llama-bench
 
 ```bash
-THREADS=8 BATCH_SIZE=256 CTX_SIZE=2048 N_GPU_LAYERS=0 ./scripts/run_llama_bench.sh
+THREADS=8 BATCH_SIZE=256 N_PROMPT=512 N_GEN=128 REPETITIONS=3 N_GPU_LAYERS=0 ./scripts/run_llama_bench.sh
 ```
 
 ## 7. RPC 从机
@@ -75,7 +76,7 @@ THREADS=8 BATCH_SIZE=256 CTX_SIZE=2048 N_GPU_LAYERS=0 ./scripts/run_llama_bench.
 ```bash
 cd Lab4
 source config/experiment.env
-RPC_PORT=50052 ./scripts/start_rpc_server.sh
+RPC_EXTRA_ARGS="-H 0.0.0.0" RPC_PORT=50052 ./scripts/start_rpc_server.sh
 ```
 
 ## 8. RPC 主机
@@ -161,8 +162,12 @@ python3 scripts/summarize_results.py results/raw/ray_*.jsonl \
 
 | 截图 | 对应命令 |
 | --- | --- |
-| `single_inference_success.png` | 第 3 节 |
-| `llama_benchmark_table.png` | 第 4 或 6 节 |
+| `quality_cn_qa_desktop_ck52vt6.png` | 第 3 或第 5 节，中文问答 |
+| `quality_summary_desktop_ck52vt6.png` | 第 3 或第 5 节，摘要 |
+| `quality_code_desktop_ck52vt6.png` | 第 3 或第 5 节，代码解释 |
+| `quality_reasoning_desktop_ck52vt6.png` | 第 3 或第 5 节，推理题 |
+| `quality_osh_desktop_ck52vt6.png` | 第 3 或第 5 节，课程相关问题 |
+| `llama_benchmark_table.png` | 第 4 或 6 节，可后续补截图 |
 | `rpc_worker_server.png` | 第 7 节 |
 | `rpc_inference_success.png` | 第 8 节 |
 | `ray_status.png` | 第 10 节 |

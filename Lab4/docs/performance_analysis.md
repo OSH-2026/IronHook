@@ -4,15 +4,15 @@
 
 | 项目 | 实测值 |
 | --- | --- |
-| 主机 CPU | 待实测填写 |
-| 主机内存 | 待实测填写 |
-| 主机 GPU | 待实测填写，没有 GPU 写无 |
-| 从机 CPU/内存/GPU | 待实测填写 |
-| 操作系统 | 待实测填写 |
-| llama.cpp commit | 待实测填写 |
-| 模型名称 | 待实测填写 |
-| GGUF 量化格式 | 待实测填写 |
-| 模型文件大小 | 待实测填写 |
+| 主机 CPU | 13th Gen Intel(R) Core(TM) i9-13900H，20 逻辑 CPU，10 核 / 20 线程 |
+| 主机内存 | 15 GiB |
+| 主机 GPU | 本次单机测试未使用 GPU；`nvidia-smi`、`rocminfo` 未检测到可用 GPU |
+| 从机 CPU/内存/GPU | 多机 RPC 阶段待填写 |
+| 操作系统 | Ubuntu 24.04.4 LTS，WSL2，Linux 6.18.26.1-microsoft-standard-WSL2 |
+| llama.cpp commit | `2016bf2b3bca10e49e06a00586a8a2fde9f6cc32`，build `b9528-2016bf2b3` |
+| 模型名称 | Qwen2.5-1.5B-Instruct GGUF |
+| GGUF 量化格式 | Q4_K_M |
+| 模型文件大小 | 1.1G，本地文件 `models/qwen2.5-1.5b-instruct-q4_k_m.gguf` |
 
 硬件和系统环境由 `scripts/collect_env.sh` 生成，原始记录放入 `results/raw/env_*.md`。
 
@@ -35,11 +35,11 @@
 
 | 项目 | 记录 |
 | --- | --- |
-| 模型 | 待实测填写 |
-| 量化格式 | 待实测填写 |
-| 部署方式 | 本地编译 llama.cpp，CPU/CUDA/Metal 后端待填写 |
+| 模型 | Qwen2.5-1.5B-Instruct GGUF |
+| 量化格式 | Q4_K_M |
+| 部署方式 | 本地编译 llama.cpp，CPU 后端，编译时启用 `GGML_RPC=ON` |
 | 运行命令 | 见 `docs/commands.md` |
-| 成功推理截图 | `results/screenshots/single_inference_success.png` |
+| 成功推理截图 | `results/screenshots/quality_osh_desktop_ck52vt6.png` 等质量评估截图 |
 
 ## 4. 测试任务设计
 
@@ -91,44 +91,59 @@ python3 scripts/llama_cli_benchmark.py \
   --out-dir results/raw
 ```
 
-结果表格待实测后填写：
+原始数据来自 `results/raw/llama_cli_benchmark_20260605_230453.jsonl`。每个配置运行 5 个 prompt，记录端到端耗时、成功率和 `/usr/bin/time -v` 给出的最大 RSS。
 
-| 配置 | 线程 | batch | ctx | GPU layers | 加载时间 ms | Prompt eval t/s | Decode t/s | 总延迟 s | 最大 RSS MB | 备注 |
+| 配置 | 线程 | batch | ctx | GPU layers | 平均总延迟 s | 最短/最长 s | 平均最大 RSS MB | 最大 RSS MB | 成功率 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| baseline | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |
-| threads_half | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |
-| threads_full | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |
-| batch_large | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |
-| no_mmap | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 |
-| gpu_offload | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 待填 | 无 GPU 可删除 |
+| `baseline` | 8 | 256 | 2048 | 0 | 5.31 | 2.77/7.63 | 1789.8 | 1793.3 | 5/5 | 基线配置 |
+| `threads_half` | 4 | 256 | 2048 | 0 | 6.16 | 3.64/8.03 | 1790.6 | 1794.3 | 5/5 | 线程数减半，延迟上升 |
+| `threads_full` | 12 | 256 | 2048 | 0 | 18.89 | 10.84/26.07 | 1789.5 | 1792.9 | 5/5 | WSL2 中显著变慢 |
+| `batch_large` | 8 | 512 | 2048 | 0 | 5.69 | 3.40/7.25 | 1789.8 | 1792.6 | 5/5 | batch 从 256 增至 512 |
+| `no_mmap` | 8 | 256 | 2048 | 0 | 5.40 | 3.04/7.41 | 1194.3 | 1197.7 | 5/5 | 禁用 mmap 后 RSS 明显下降 |
+| `gpu_offload` | 8 | 256 | 2048 | 20 | 5.46 | 2.67/7.30 | 1789.7 | 1793.0 | 5/5 | 本机无可用 GPU，实际仍主要为 CPU 路径 |
+
+`llama-bench` 使用新版参数重跑后得到 `results/raw/llama_bench_20260605_231015_fixed.txt`：
+
+| 测试项 | 后端 | 线程 | batch | 吞吐 |
+| --- | --- | --- | --- | --- |
+| Prompt eval `pp512` | CPU | 8 | 256 | `199.57 ± 6.20 t/s` |
+| Decode `tg128` | CPU | 8 | 256 | `38.42 ± 3.65 t/s` |
+
+说明：`results/raw/llama_bench_20260605_231015.txt` 是一次无效记录，原因是新版 `llama-bench` 不再接受旧脚本里的 `-c/--ctx-size` 参数；脚本已改为 `-p/--n-prompt` 与 `-n/--n-gen`。
 
 ### 5.1 参数影响分析
 
-实测后从以下角度分析：
+根据实测结果：
 
-| 参数 | 预期现象 | 系统原因 |
+| 参数 | 实测现象 | 系统原因 |
 | --- | --- | --- |
-| `--threads` | 线程数增加通常提高 CPU 吞吐，但超过物理核心后收益下降 | 调度开销、缓存竞争和内存带宽限制 |
-| `--batch-size` | 较大 batch 可能提高 prompt eval 吞吐，但增加内存占用 | 更大的批处理提高矩阵计算利用率，同时占用更多中间缓冲 |
-| `--ctx-size` | 上下文越大，KV cache 占用越高 | KV cache 与层数、隐藏维度和上下文 token 数相关 |
-| `--n-gpu-layers` | GPU offload 可降低 decode 延迟 | Transformer 层计算转移到 GPU，但受显存和 PCIe/统一内存影响 |
-| `--no-mmap` | 可能增加加载时间和 RSS，但减少 page fault 抖动 | 模型从文件映射改为直接读入内存 |
+| `--threads` | 4 线程平均 6.16s，8 线程平均 5.31s，12 线程平均 18.89s | WSL2 环境下线程数超过有效并行范围后出现调度、缓存和异构核心竞争，CPU 利用率反而下降 |
+| `--batch-size` | batch 512 平均 5.69s，略慢于 baseline | 该批 prompt 较短，batch 扩大未明显提高吞吐，反而带来额外缓冲和调度开销 |
+| `--ctx-size` | 本次固定为 2048 | 该值足够覆盖测试 prompt；继续增大将提高 KV cache 内存压力，单机阶段未作为主变量扫描 |
+| `--n-gpu-layers` | 设置 20 后平均 5.46s，与 baseline 接近 | 本机没有可用 GPU 后端，无法形成真正 offload；报告中不把该项作为 GPU 加速结论 |
+| `--no-mmap` | 平均耗时 5.40s，与 baseline 接近；最大 RSS 从约 1.79GB 降到约 1.20GB | 在当前 WSL2 文件系统和页缓存状态下，禁用 mmap 改变了内存记账和映射方式；因模型较小，端到端延迟差异不大 |
+
+综合来看，本机单机 CPU 推理的较优配置是 `--threads 8 --batch-size 256 --ctx-size 2048 --n-gpu-layers 0`。该配置平均延迟最低，内存占用稳定，且 `llama-bench` 的 decode 吞吐约为 38.42 t/s。
 
 ## 6. 输出质量结果
 
-| Prompt ID | baseline 输出摘要 | 优化配置输出摘要 | 差异分析 |
+| Prompt ID | 截图 | baseline 输出摘要 | 差异分析 |
 | --- | --- | --- | --- |
-| `quality_cn_qa` | 待填 | 待填 | 待填 |
-| `quality_summary` | 待填 | 待填 | 待填 |
-| `quality_code` | 待填 | 待填 | 待填 |
-| `quality_reasoning` | 待填 | 待填 | 待填 |
-| `quality_osh` | 待填 | 待填 | 待填 |
+| `quality_cn_qa` | `results/screenshots/quality_cn_qa_desktop_ck52vt6.png` | 围绕“读万卷书不如行万里路”给出实践经验、旅行体验、技能培养和个人成长等例子 | 输出相关、结构清晰，但有一定套话和重复 |
+| `quality_summary` | `results/screenshots/quality_summary_desktop_ck52vt6.png` | 将《三体》第一部中的黑暗森林法则压缩为文明竞争、隐藏与威慑等核心意思 | 摘要较短，能抓住主题，但“第一部”与完整黑暗森林概念存在一定概括化 |
+| `quality_code` | `results/screenshots/quality_code_desktop_ck52vt6.png` | 正确解释递归 Fibonacci，并指出时间复杂度为指数级 `O(2^n)` | 代码解释准确，能指出重复子问题造成复杂度高 |
+| `quality_reasoning` | `results/screenshots/quality_reasoning_desktop_ck52vt6.png` | 对宝石盒子逻辑题进行了分情况讨论 | 结论错误：在“仅一个陈述为真”的条件下，宝石应在盒子 2；模型最后判断“不在任何盒子”不符合题设 |
+| `quality_osh` | `results/screenshots/quality_osh_desktop_ck52vt6.png` | 用三句话解释进程调度，说明其负责 CPU 资源分配、进程运行顺序和时间片安排 | 输出相关、简洁，满足课程相关问题要求 |
 
 分析重点：
 
-1. 线程、batch、ctx 等性能参数通常不改变模型权重，本身不应显著改变语义质量。
-2. `--temp`、`--top-p`、`--repeat-penalty` 等采样参数会直接影响输出随机性、重复度和稳定性。
-3. 如果配置导致内存压力、上下文截断或异常退出，输出质量会间接受到影响。
+脚本质量评估结果来自 `results/raw/llama_cli_benchmark_20260605_230905.jsonl`：`quality_deterministic` 平均耗时 5.29s，`quality_more_diverse` 平均耗时 6.06s，二者最大 RSS 均约为 1.79GB。温度从 0.2 提高到 0.8 后，输出会更发散，端到端耗时略有上升，但主要性能差异仍来自生成 token 数量和 prompt 内容，而不是采样参数本身。
+
+质量结论：
+
+1. 中文问答、摘要、代码解释和课程相关问题均能得到可用回答。
+2. 逻辑推理题暴露了小模型的可靠性问题，报告和应用中不能只看语言流畅度，还需要检查推理链和最终结论。
+3. 线程、batch、ctx 等性能参数通常不改变模型权重，本身不应显著改变语义质量；采样温度、top-p 和重复惩罚更容易影响输出稳定性。
 
 ## 7. RPC 多机推理结果
 
@@ -174,9 +189,12 @@ Ray 分析要点：
 
 ## 9. 结论
 
-待实测后填写。建议结论包含：
+单机阶段结论：
 
-1. 最适合本机的 llama.cpp 参数组合。
-2. 单机和 RPC 的性能差异及原因。
-3. Ray 批量推理相对串行执行的吞吐变化。
-4. 当前实验的限制，例如模型较小、网络为无线、没有 GPU、机器数量不足等。
+1. 在 `DESKTOP-CK52VT6` 上，Qwen2.5-1.5B-Instruct Q4_K_M 可以稳定完成 CPU 单机推理，模型常驻内存约 1.8GB。
+2. 当前最合适的单机配置是 `--threads 8 --batch-size 256 --ctx-size 2048 --n-gpu-layers 0`，5 个 prompt 的平均端到端耗时为 5.31s。
+3. `llama-bench` 显示该模型在 CPU 后端下 prompt eval 约 199.57 t/s，decode 约 38.42 t/s。
+4. 12 线程配置在 WSL2 中明显变慢，说明线程数并非越高越好，需要结合物理核心、调度环境和内存带宽观察。
+5. 质量评估中代码解释和课程问答表现较好，但逻辑推理题出现错误，后续分析需要同时关注性能和输出正确性。
+
+RPC 和 Ray 阶段待多机数据补充后完成。
