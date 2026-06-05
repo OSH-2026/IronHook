@@ -16,14 +16,14 @@ CPU + RPC：
 
 ```bash
 cd Lab4
-BACKEND=cpu GGML_RPC=ON LLAMA_CPP_DIR="$HOME/llama.cpp" ./scripts/setup_llama_cpp.sh
+BACKEND=cpu GGML_RPC=ON LLAMA_CPP_DIR="$PWD/llama.cpp" ./scripts/setup_llama_cpp.sh
 ```
 
 CUDA + RPC：
 
 ```bash
 cd Lab4
-BACKEND=cuda GGML_RPC=ON LLAMA_CPP_DIR="$HOME/llama.cpp" ./scripts/setup_llama_cpp.sh
+BACKEND=cuda GGML_RPC=ON LLAMA_CPP_DIR="$PWD/llama.cpp" ./scripts/setup_llama_cpp.sh
 ```
 
 记录 commit：

@@ -36,10 +36,10 @@ cp Lab4/config/ray_servers.example.json Lab4/config/ray_servers.json
 编辑 `Lab4/config/experiment.env`，至少填写：
 
 ```bash
-LLAMA_CPP_DIR="$HOME/llama.cpp"
-MODEL_PATH="/absolute/path/to/model.gguf"
-MODEL_NAME="Qwen2.5-1.5B-Instruct"
-QUANTIZATION="Q4_K_M"
+export LLAMA_CPP_DIR="$PWD/llama.cpp"
+export MODEL_PATH="/absolute/path/to/model.gguf"
+export MODEL_NAME="Qwen2.5-1.5B-Instruct"
+export QUANTIZATION="Q4_K_M"
 ```
 
 ## 4. llama.cpp 编译
@@ -48,29 +48,29 @@ CPU 后端并启用 RPC：
 
 ```bash
 cd Lab4
-BACKEND=cpu GGML_RPC=ON LLAMA_CPP_DIR="$HOME/llama.cpp" ./scripts/setup_llama_cpp.sh
+BACKEND=cpu GGML_RPC=ON LLAMA_CPP_DIR="$PWD/llama.cpp" ./scripts/setup_llama_cpp.sh
 ```
 
 NVIDIA CUDA 后端并启用 RPC：
 
 ```bash
 cd Lab4
-BACKEND=cuda GGML_RPC=ON LLAMA_CPP_DIR="$HOME/llama.cpp" ./scripts/setup_llama_cpp.sh
+BACKEND=cuda GGML_RPC=ON LLAMA_CPP_DIR="$PWD/llama.cpp" ./scripts/setup_llama_cpp.sh
 ```
 
 Apple Metal 后端并启用 RPC：
 
 ```bash
 cd Lab4
-BACKEND=metal GGML_RPC=ON LLAMA_CPP_DIR="$HOME/llama.cpp" ./scripts/setup_llama_cpp.sh
+BACKEND=metal GGML_RPC=ON LLAMA_CPP_DIR="$PWD/llama.cpp" ./scripts/setup_llama_cpp.sh
 ```
 
 编译完成后应能看到：
 
 ```bash
-$HOME/llama.cpp/build/bin/llama-cli
-$HOME/llama.cpp/build/bin/llama-server
-$HOME/llama.cpp/build/bin/rpc-server
+$LLAMA_CPP_DIR/build/bin/llama-cli
+$LLAMA_CPP_DIR/build/bin/llama-server
+$LLAMA_CPP_DIR/build/bin/rpc-server
 ```
 
 ## 5. 单机推理
